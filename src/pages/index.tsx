@@ -5,6 +5,7 @@ import { useState } from "react";
 export default function Home() {
   const [friends, setFriends] = useState(initialFriends);
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState(null);
 
   const handleButtonClick = () => {
     setIsOpen((isOpen) => !isOpen);
@@ -12,6 +13,12 @@ export default function Home() {
 
   const handleAddFriend = (friend: any) => {
     setFriends((friends) => [...friends, friend]);
+    setIsOpen(false);
+  };
+
+  const handleSelection = (friend: any) => {
+    // setSelectedFriend(friend);
+    setSelectedFriend((cur: any) => (cur?.id === friend.id ? null : friend));
     setIsOpen(false);
   };
 
@@ -25,31 +32,42 @@ export default function Home() {
       </Head>
       <div className="app">
         <div className="sidebar">
-          <FriendsList friends={friends} />
+          <FriendsList
+            friends={friends}
+            selectedFriend={selectedFriend}
+            onSelection={handleSelection}
+          />
           {isOpen && <FormAddFriend onAddFriend={handleAddFriend} />}
           <Button onClick={handleButtonClick}>
             {isOpen ? "Close" : "Add Friend"}
           </Button>
         </div>
-        <FormSplitBill />
+        {selectedFriend && <FormSplitBill selectedFriend={selectedFriend} />}
       </div>
     </>
   );
 }
 
-const FriendsList = ({ friends }: any) => {
+const FriendsList = ({ friends, onSelection, selectedFriend }: any) => {
   return (
     <ul>
       {friends.map((friend: any) => (
-        <Friend friend={friend} key={friend.id} />
+        <Friend
+          friend={friend}
+          key={friend.id}
+          onSelection={onSelection}
+          selectedFriend={selectedFriend}
+        />
       ))}
     </ul>
   );
 };
 
-const Friend = ({ friend }: any) => {
+const Friend = ({ friend, onSelection, selectedFriend }: any) => {
+  const isSelected = selectedFriend?.id === friend.id;
+
   return (
-    <li>
+    <li className={isSelected ? "selected" : ""}>
       <img src={friend.image} alt={friend.name} />
       <h3> {friend.name}</h3>
       {friend.balance < 0 && (
@@ -63,7 +81,9 @@ const Friend = ({ friend }: any) => {
         </p>
       )}
       {friend.balance === 0 && <p>You and {friend.name} are even</p>}
-      <Button>Select</Button>
+      <Button onClick={() => onSelection(friend)}>
+        {isSelected ? "Close" : "Select"}
+      </Button>
     </li>
   );
 };
@@ -129,20 +149,40 @@ const FormAddFriend = ({ onAddFriend }: any) => {
   );
 };
 
-const FormSplitBill = () => {
+const FormSplitBill = ({ selectedFriend }: any) => {
+  const [bill, setBill] = useState<any>("");
+  const [paidByUser, setPaidByUser] = useState<any>("");
+  const paidByFriend = bill ? bill - paidByUser : "";
+  const [whoIsPaying, setWhoIsPaying] = useState("User");
+
   return (
     <form className="form-split-bill">
-      <h2>Split a bill with X</h2>
+      <h2>Split a bill with {selectedFriend.name}</h2>
       <label>💰 Bill Value</label>
-      <input type="text" />
+      <input
+        type="text"
+        value={bill}
+        onChange={(e: any) => setBill(Number(e.target.value))}
+      />
       <label>🧍 Your expense</label>
-      <input type="text" />
-      <label>🧑‍🤝‍🧑 X&apos;s expense</label>
-      <input type="text" disabled />
+      <input
+        type="text"
+        value={paidByUser}
+        onChange={(e: any) =>
+          setPaidByUser(
+            Number(e.target.value) > bill ? paidByUser : Number(e.target.value)
+          )
+        }
+      />
+      <label>🧑‍🤝‍🧑 {selectedFriend.name}&apos;s expense</label>
+      <input type="text" disabled value={paidByFriend} />
       <label>🤑 Who is paying the bill</label>
-      <select>
+      <select
+        value={whoIsPaying}
+        onChange={(e: any) => setWhoIsPaying(e.target.value)}
+      >
         <option value="user">You</option>
-        <option value="friend">X</option>
+        <option value="friend">{selectedFriend.name}</option>
       </select>
       <Button>Split bill</Button>
     </form>
