@@ -42,25 +42,27 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <div className="app">
+      <div className="header">
+        <h1>Bill Splitter</h1>
+      </div>
+      <div>
+        <div>
+          <FormAddFriend onAddFriend={handleAddFriend} />
+        </div>
         <div className="sidebar">
           <FriendsList
             friends={friends}
             selectedFriend={selectedFriend}
             onSelection={handleSelection}
           />
-          {isOpen && <FormAddFriend onAddFriend={handleAddFriend} />}
-          <Button onClick={handleButtonClick}>
-            {isOpen ? "Close" : "Add Friend"}
-          </Button>
+          {selectedFriend && (
+            <FormSplitBill
+              selectedFriend={selectedFriend}
+              onSplitBill={handleSplitBill}
+              key={selectedFriend.id}
+            />
+          )}
         </div>
-        {selectedFriend && (
-          <FormSplitBill
-            selectedFriend={selectedFriend}
-            onSplitBill={handleSplitBill}
-            key={selectedFriend.id}
-          />
-        )}
       </div>
     </>
   );
